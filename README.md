@@ -23,11 +23,11 @@ met, here's the plan:
 
 * Just place the attachmentbot.py file into the folder where you want to download
 your files to.
-* Run the file by typing in > python attachmentbot.py
+* Run the file by typing in  ```python attachmentbot.py```
 * When prompted, enter your email login credentials (yea, you still *do* need
   to do this) along with the name of the folder you want to download
   attachments from.
-* Relax while watching your attachments get copied to your computer one by one!
+* Relax while watching loads of attachments get copied to your computer one by one!
 
 N.B.
 ------------------------------
