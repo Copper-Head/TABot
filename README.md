@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 AttachmentBot
 ==============================
 A very small but occasionally useful script for downloading batches of email attachments
@@ -39,4 +38,3 @@ running it on one's entire Inbox may quickly get out of hand.
 =======
 attachmentbot
 =============
->>>>>>> 6540ba12538a6182f4f1ccac5a0d71b0dc812d77
