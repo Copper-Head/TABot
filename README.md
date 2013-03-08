@@ -29,12 +29,10 @@ your files to.
   attachments from.
 * Relax while watching your attachments get copied to your computer one by one!
 
+N.B.
 ------------------------------
 The folder name is case and space sensitive. This means *Folder Name* is
 different from *folder name* is different from *folderName*. I would also
 advise against specifying your whole Inbox as the target folder, since the
 script at this point downloads all attachments indiscriminately and so
 running it on one's entire Inbox may quickly get out of hand.
-=======
-attachmentbot
-=============
