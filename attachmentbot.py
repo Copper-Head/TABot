@@ -62,9 +62,8 @@ def main():
     server = IMAP4_SSL(SERVERNAME ,PORT)
     while not loggedIn:
         # ask for credentials
-        #user = raw_input('Please enter your username, then hit Enter:\n')
-        #pw = getpass.getpass('Now please enter your password and hit Enter:\n')
-        user, pw = 'ilia.kurenkov', 'bow2Googletheallknowing'
+        user = raw_input('Please enter your username, then hit Enter:\n')
+        pw = getpass.getpass('Now please enter your password and hit Enter:\n')
         print('Attempting to authenticate...')
         try:
             server.login(user, pw)
@@ -78,7 +77,6 @@ def main():
                 sys.exit()
             continue
     #folder = generate_folder_name(raw_input(FOLDER_REQUEST_MAIN))
-    folder = 'HAS FILES'
     server.select(folder) # attempt to select a folder 
     while not has_selected(server):
         #if for some reason the specified folder was not selected...
