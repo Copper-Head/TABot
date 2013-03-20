@@ -1,7 +1,7 @@
 # This script was created by Ilia Kurenkov who decided he was fed up with
 # manually downloading batches of email attachments from students.
 # This program is free and subject to the conditions of the MIT license.
-# If you are care to read that, here's a link:
+# If you care to read that, here's a link:
 # http://opensource.org/licenses/MIT
 
 #================================== IMPORTS ===================================
@@ -41,7 +41,7 @@ def has_selected(serverinst):
 
 def is_application(message):
     '''checks if message instance is an application'''
-    return 'application' in submessg.get_content_type()
+    return 'application' in message.get_content_type()
 
 #============================ Helper Functions ================================
 
@@ -62,12 +62,13 @@ def main():
     server = IMAP4_SSL(SERVERNAME ,PORT)
     while not loggedIn:
         # ask for credentials
-        user = raw_input('Please enter your username, then hit Enter:\n')
-        pw = getpass.getpass('Now please enter your password and hit Enter:\n')
+        #user = raw_input('Please enter your username, then hit Enter:\n')
+        #pw = getpass.getpass('Now please enter your password and hit Enter:\n')
+        user, pw = 'ilia.kurenkov', 'bow2Googletheallknowing'
         print('Attempting to authenticate...')
         try:
             server.login(user, pw)
-            loggedIn = True # if login successful exit while loop 
+            loggedIn = True 
             print("We're in!!")
         except Exception as e:
             print(e)
@@ -76,7 +77,8 @@ def main():
             if leave == 'exit': # if user wishes to exit, do so
                 sys.exit()
             continue
-    folder = generate_folder_name(raw_input(FOLDER_REQUEST_MAIN))
+    #folder = generate_folder_name(raw_input(FOLDER_REQUEST_MAIN))
+    folder = 'HAS FILES'
     server.select(folder) # attempt to select a folder 
     while not has_selected(server):
         #if for some reason the specified folder was not selected...
@@ -84,13 +86,15 @@ def main():
                 raw_input(FOLDER_REQUEST_REPEAT.format(folder)))
         server.select(folder) #... try again after prompting 
     print('\nSelected folder {}, looking at messages'.format(folder))
-     #search for messages
+    #search for messages
     typ, messgs = server.search(None, 'ALL', 'UNDELETED')
-     #turn retrieved object into list of message numbers and loop over it
+    #turn retrieved object into list of message numbers and loop over it
     messgIDs = messgs[0].split()
     for messageId in messgIDs:
         raw = server.fetch(messageId, '(RFC822)')[1][0][1]
         mail = email.message_from_string(raw)
+        return_email = mail['Return-Path']
+        print return_email
         if mail.is_multipart():
             for submessg in mail.get_payload():
                 if is_application(submessg):
