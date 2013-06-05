@@ -6,7 +6,7 @@
 
 #================================== IMPORTS ===================================
 from __future__ import print_function
-import sys, os
+import sys
 from imaplib import IMAP4_SSL #for IMAP server connections 
 import email #for accessing email message attributes 
 import getpass #secure way to get passwords 
@@ -99,7 +99,7 @@ def main():
     for messageId in messgIDs:
         raw = server.fetch(messageId, '(RFC822)')[1][0][1]
         mail = email.message_from_string(raw)
-        return_email = mail['Return-Path']
+        return_email = mail['From']
         if return_email:
             print('Sender: {}'.format(return_email))
         if mail.is_multipart():
