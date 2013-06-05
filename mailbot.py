@@ -1,36 +1,50 @@
-# This program was created by Ilia Kurenkov who decided he was fed up with
+# This program was created by Ilia Kurenkov, who decided he was fed up with
 # manually downloading batches of email attachments from students, then
 # responding to their submissions with comments and grades. The goal of this
-# program is to make it so tha its user (an instructor or TA) should only need
+# program is to make it so that its user (an instructor or TA) should only need
 # to worry about making the right comments and grades and leave all the menial
 # processing to MailBot.
 # This program is free and subject to the conditions of the MIT license.
 # If you care to read that, here's a link:
 # http://opensource.org/licenses/MIT
 
+#USAGE:
+
+# python mailbot.py [-h] [-send_from COMMENTS_FILE_NAME | -comments]
+
+# optional arguments:
+#  -h, --help            show this help message and exit
+#  -send_from COMMENTS_FILE_NAME
+#                        send emails using specified comments file name instead
+#                        of downloading attachments
+#  -comments             generate comments file
+
 #================================== IMPORTS ===================================
 from __future__ import print_function
 import sys, re
 import email #for accessing email message attributes 
-from email.mime.text import MIMEText
+from email.mime.text import MIMEText #used for creating emails from scratch 
 import getpass #secure way to get passwords 
-from imaplib import IMAP4_SSL
-from smtplib import SMTP_SSL
+from imaplib import IMAP4_SSL #IMAP server functionality for downloading
+from smtplib import SMTP_SSL #SMTP server functionality for sending 
 #import xml.etree.ElementTree as et
 import json
 from collections import OrderedDict
 from random import choice
-import argparse
+import argparse #smart command line argument parsing 
 
 #================================= SET UP =====================================
 # Some messages for printing
-WELCOME_MESSAGE = '''Welcome to Mailbot, the email attachment collector that 
+WELCOME_MESSAGE = '''Welcome to Mailbot, the email attachment collector that \
 will make downloading batches of attachments from Gmail extremely easy!\n
-Before proceeding, make sure you are running this from the right directory and
-that you know which folder in your mailbox you want to download the attachments
-from. \n
-To begin, please enter the username for the mailbox you would like to login to
-followed by the password for it.'''
+If you are ever unsure how to run this program, you can view the help message \
+for it by running it with the ``-h" option like so:\n
+    python mailbot.py -h
+Before proceeding, make sure you are running this from the right directory \
+and that you know which folder in your mailbox you want to download the \
+attachments from. \n
+To begin, please enter the username for the mailbox you would like to login \
+to followed by the password for it.'''
 
 FOLDER_REQUEST_FIRST = '''Now enter the folder you wish to select to search \
 for messages with attachments.\n *** Case sensitive ***\n'''
