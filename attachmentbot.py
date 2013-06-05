@@ -5,10 +5,11 @@
 # http://opensource.org/licenses/MIT
 
 #================================== IMPORTS ===================================
-import sys
-from imaplib import IMAP4_SSL
-import email
-import getpass
+from __future__ import print_function
+import sys, os
+from imaplib import IMAP4_SSL #for IMAP server connections 
+import email #for accessing email message attributes 
+import getpass #secure way to get passwords 
 
 #================================= SET UP =====================================
 # Some messages for printing
@@ -21,17 +22,17 @@ To begin, please enter the username for the mailbox you would like to login to
 followed by the password for it.'''
 
 FOLDER_REQUEST_MAIN = '''Now enter the folder you wish to select to search \
-for messages with attachments. Case sensitive.\n'''
+for messages with attachments.\n *** Case sensitive ***\n'''
    
-FOLDER_REQUEST_REPEAT = '''Seems like the folder "{}" was not found.\nPlease type \
-in a new folder name. Don't forget that it's case sensitive\n'''
+FOLDER_REQUEST_REPEAT = '''Seems like the folder ``{}" was not found.\nPlease type \
+in a new folder name. Don't forget that it's Case Sensitive\n'''
 
-EXIT_CLAUSE = '''If you wish to exit, type "exit" sans quotes now.\n If you \
+EXIT_CLAUSE = '''If you wish to exit, type ``exit" sans quotes now.\n If you \
 want to give it another go, simply hit ENTER.\n'''
 
 # some connection defaults
-SERVERNAME = "imap.gmail.com" # should be changeable to any imap server name 
-PORT = 993 # change only if server uses custom SSL port 
+SERVERNAME = "imap.gmail.com"   # should be changeable to any imap server name 
+PORT = 993                      # change only if server uses custom SSL port 
 
 #=========================== Boolean Functions ================================
 
@@ -39,15 +40,20 @@ def has_selected(serverinst):
     '''expects IMAP4_SSL instance, checks if its state is "selected"'''
     return serverinst.state == 'SELECTED'
 
-def is_application(message):
-    '''checks if message instance is an application'''
-    return 'application' in message.get_content_type()
+def is_python_script(filename):
+    '''Given a filename (potentially NoneType), check if it's valid (not
+    NoneType) and that it ends in ``.py".  For this to work, it is paramount
+    for students to make sure their submissions contain an explicit extension.
+    Please make sure to stress this in class, since the file extension is
+    also important when running the script files.
+    '''
+    return filename and filename.endswith('.py')
 
 #============================ Helper Functions ================================
 
 def generate_folder_name(string):
     '''very primitive conversion of user input into acceptable mail imap
-    formats. very much a developing idea, dunno if will keep it and develop
+    formats. very much a work in progress, dunno if will keep it and develop
     further or scrap entirely. '''
     if string == 'inbox':
         return string.capitalize()
@@ -56,6 +62,8 @@ def generate_folder_name(string):
 #================================= __MAIN__ ===================================
 
 def main():
+    file_counter = 0
+    downloaded_files = []
     loggedIn = False
     print(WELCOME_MESSAGE)
     print('Starting up a connection...')
@@ -76,14 +84,14 @@ def main():
             if leave == 'exit': # if user wishes to exit, do so
                 sys.exit()
             continue
-    #folder = generate_folder_name(raw_input(FOLDER_REQUEST_MAIN))
+    folder = generate_folder_name(raw_input(FOLDER_REQUEST_MAIN))
     server.select(folder) # attempt to select a folder 
     while not has_selected(server):
         #if for some reason the specified folder was not selected...
         folder = generate_folder_name(
                 raw_input(FOLDER_REQUEST_REPEAT.format(folder)))
         server.select(folder) #... try again after prompting 
-    print('\nSelected folder {}, looking at messages'.format(folder))
+    print('\nSelected folder ``{}", looking at the messages therein.'.format(folder))
     #search for messages
     typ, messgs = server.search(None, 'ALL', 'UNDELETED')
     #turn retrieved object into list of message numbers and loop over it
@@ -92,14 +100,19 @@ def main():
         raw = server.fetch(messageId, '(RFC822)')[1][0][1]
         mail = email.message_from_string(raw)
         return_email = mail['Return-Path']
-        print return_email
+        if return_email:
+            print('Sender: {}'.format(return_email))
         if mail.is_multipart():
             for submessg in mail.get_payload():
-                if is_application(submessg):
-                    with open(submessg.get_filename(), 'wb') as f:
+                file_name = submessg.get_filename() #NoneType if no filename
+                if is_python_script(file_name):
+                    if file_name not in downloaded_files:
+                        file_counter += 1
+                        downloaded_files.append(file_name)
+                    with open(file_name, 'wb') as f:
                         f.write(submessg.get_payload(decode=True))
-                    print('Created file: {}'.format(submessg.get_filename()))
-    print('\nMission accomplished!! Ciao :)')
+                    print('Created file: {}'.format(file_name))
+    print('\nMission accomplished! I downloaded {0} unique files. Ciao :)'.format(file_counter))
 
 #==============================================================================
 if __name__ == '__main__':
