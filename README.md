@@ -49,9 +49,9 @@ Command-Line Options
 	if this flag is included, the program will generate a comments file corresponding
   	to the downloaded files; incompatible with the "-send_from" option
 * -send_from COMMENTS_FILE_NAME 
-	this option is incompatible with the "-comments" option; when used it sygnals to the
-	program to send out emails using the COMMENTS_FILE_NAME as the source of comments instead
-	of its normal behavior (downloading attachments to the current directory)
+this option is incompatible with the "-comments" option; when used, it tells the
+program to send out emails using the COMMENTS_FILE_NAME as the source of comments instead
+of its normal behavior (downloading attachments to the current directory)
 
 Disclaimer
 ------------------------------
