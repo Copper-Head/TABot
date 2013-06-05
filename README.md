@@ -1,4 +1,4 @@
-AttachmentBot
+TABot
 ==============================
 A small and occasionally useful script for downloading batches of email attachments
 from IMAP mailboxes. Currently, only downloading executable scripts from Gmail is supported and *no* Yahoo! support is projected in the near future!
