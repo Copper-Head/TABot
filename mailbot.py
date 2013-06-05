@@ -9,16 +9,18 @@
 # http://opensource.org/licenses/MIT
 
 #================================== IMPORTS ===================================
+from __future__ import print_function
 import sys, re
-import email
+import email #for accessing email message attributes 
 from email.mime.text import MIMEText
-import getpass
+import getpass #secure way to get passwords 
 from imaplib import IMAP4_SSL
 from smtplib import SMTP_SSL
 #import xml.etree.ElementTree as et
 import json
 from collections import OrderedDict
 from random import choice
+import argparse
 
 #================================= SET UP =====================================
 # Some messages for printing
@@ -31,27 +33,13 @@ To begin, please enter the username for the mailbox you would like to login to
 followed by the password for it.'''
 
 FOLDER_REQUEST_FIRST = '''Now enter the folder you wish to select to search \
-for messages with attachments. Case sensitive.\n'''
+for messages with attachments.\n *** Case sensitive ***\n'''
    
 FOLDER_REQUEST_REPEAT = '''Seems like the folder "{}" was not found.\nPlease type \
 in a new folder name. Don't forget that it's case sensitive\n'''
 
 EXIT_CLAUSE = '''If you wish to exit, type "exit" sans quotes now.\n If you \
 want to give it another go, simply hit ENTER.\n'''
-
-USAGE_MESSAGE = ''' It seems you forgot to specify an option. 
-In case you've forgotten what these are, an explanation of how to run this
-program is given below.
-
-This program is generally run the following way:
-    ~$ python mailbot.py OPTION [COMMENTS FILE NAME]
-
-OPTION can either be 'download' or 'email'. If it is 'email', COMMENTS FILE
-NAME must be specified. It currently will *not* work with the 'download'
-option.
-
-Please try to run the program again with your desired option.
-'''
 
 GREETINGS = ['Hi', 'Hello', 'Greetings',]
 SETTINGS = {'incoming': (IMAP4_SSL,("imap.gmail.com", 993)), 'outgoing':
@@ -71,9 +59,14 @@ def has_selected(serverinst):
     '''expects IMAP4_SSL instance, checks if its state is "selected"'''
     return serverinst.state == 'SELECTED'
 
-def is_application(message):
-    '''checks if message instance is an application'''
-    return 'application' in message.get_content_type()
+def is_python_script(filename):
+    '''Given a filename (potentially NoneType), check if it's valid (not
+    NoneType) and that it ends in ``.py".  For this to work, it is paramount
+    for students to make sure their submissions contain an explicit extension.
+    Please make sure to stress this in class, since the file extension is
+    also important when running the script files.
+    '''
+    return filename and filename.endswith('.py')
 
 def is_found(name_match):
     return len(name_match) > 0
@@ -114,6 +107,12 @@ def create_email(submission, subject, sign, sender):
     messg['From'] = sender
     return messg
 
+def ask_for_uname():
+    return raw_input('Please enter your username, then hit Enter:\n')
+
+def ask_for_password():
+    getpass.getpass('Now please enter your password and hit Enter:\n')
+
 def setup_server(direction):
     loggedIn = False
     print(WELCOME_MESSAGE)
@@ -122,8 +121,8 @@ def setup_server(direction):
     server = protocol(*ServerAndPort)
     while not loggedIn:
         # ask for credentials
-        user = raw_input('Please enter your username, then hit Enter:\n')
-        pw = getpass.getpass('Now please enter your password and hit Enter:\n')
+        user = ask_for_uname()
+        pw = ask_for_password()
         print('Attempting to authenticate...')
         try:
             server.login(user, pw)
@@ -143,21 +142,22 @@ def setup_server(direction):
 
 #============================ Core Functions ==================================
 
-def download_attachments():
+def download_attachments(create_comments):
+    file_counter = 0
+    downloaded_files = []
     # set up the server (includes login)
     auth_server = setup_server('incoming') 
     #ask for folder to select
     folder = raw_input(FOLDER_REQUEST_FIRST)
-    auth_server.select(folder) # attempt to select a folder 
-    while not has_selected(server):
+    auth_server.select(folder) # attempt to select specified folder 
+    while not has_selected(auth_server):
         #if for some reason the specified folder was not selected...
         folder = generate_folder_name(
                 raw_input(FOLDER_REQUEST_REPEAT.format(folder)))
         auth_server.select(folder) #... try again after prompting 
-    print('\nSelected folder {}, looking at messages'.format(folder))
-    
+    print('\nSelected folder ``{}", looking at the messages therein.'.format(folder))
     #search for messages
-    typ, messgs = server.search(None, 'ALL', 'UNDELETED')
+    typ, messgs = auth_server.search(None, 'ALL', 'UNDELETED')
     #turn retrieved object into list of message numbers and loop over it
     messgIDs = messgs[0].split()
     comments = []
@@ -167,21 +167,24 @@ def download_attachments():
         return_email = mail['From']
         if mail.is_multipart():
             for submessg in mail.get_payload():
-                if is_application(submessg):
-                    with open(submessg.get_filename(), 'wb') as f:
+                file_name = submessg.get_filename() #NoneType if no filename
+                if is_python_script(file_name):
+                    if file_name not in downloaded_files:
+                        file_counter += 1
+                        downloaded_files.append(file_name)
+                    with open(file_name, 'wb') as f:
                         f.write(submessg.get_payload(decode=True))
-                    print('Created file: {}'.format(submessg.get_filename()))
+                    print('Created file: {}'.format(file_name))
                     # create a comments entry
                     comments.append(create_submission(return_email))
-    
-    # once done downloading attachments, dump comments into comments file
-    print('Creating comments file.', comments_file)
-    comments_file = comments_fname(folder)
-    with open(comments_file, 'w') as cfile:
-        json.dumps(comments)
-        json.dump(comments, cfile, indent=1) # include nicer-looking indentation 
-    
-    print('\nMission accomplished!! Ciao :)')
+    if create_comments:
+        # once done downloading attachments, dump comments into comments file
+        comments_file = comments_fname(folder)
+        print('Creating comments file.', comments_file)
+        with open(comments_file, 'w') as cfile:
+            json.dumps(comments)
+            json.dump(comments, cfile, indent=1) # include nicer-looking indentation 
+    print('\nMission accomplished! I downloaded {0} unique files. Ciao :)'.format(file_counter))
 
 def send_emails_from(comments_fname):
     #set up the server and get sender name
@@ -208,18 +211,20 @@ def send_emails_from(comments_fname):
 
 #================================= __MAIN__ ===================================
 
-def main(options):
-    '''This is set up to ignore any cmd-line args beyond the second one
-    '''
-    if not options: # in case no options were passed...
-        # enlighten the user about how to use this program
-        print(USAGE_MESSAGE)
-        sys.exit()
-    if options[0] == 'download': # if we are dl-ing submissions 
-        download_attachments()
-    elif options[0] == 'email': # if we are sending out grades 
-        send_emails_from(options[1])
+def main():
+    # set up some argparse goodness
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-send_from', default=None, metavar='COMMENTS_FILE_NAME',
+    help='send emails using specified comments file name instead of downloading attachments')
+    group.add_argument('-comments', action='store_true', #default=False,
+            help='generate comments file')
+    args = parser.parse_args()
+    if args.send_from: # if we are sending out grades 
+        send_emails_from(args.send_from)
+    else: # if we are dl-ing submissions 
+        download_attachments(args.comments)
 
 #==============================================================================
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
