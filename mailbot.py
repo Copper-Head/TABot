@@ -3,7 +3,7 @@
 # responding to their submissions with comments and grades. The goal of this
 # program is to make it so tha its user (an instructor or TA) should only need
 # to worry about making the right comments and grades and leave all the menial
-# processing to MailBot
+# processing to MailBot.
 # This program is free and subject to the conditions of the MIT license.
 # If you care to read that, here's a link:
 # http://opensource.org/licenses/MIT
