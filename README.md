@@ -1,7 +1,7 @@
 TABot
 ==============================
 A small and occasionally useful script for downloading batches of email attachments
-from IMAP mailboxes. Currently, only downloading executable scripts from Gmail is supported and *no* Yahoo! support is projected in the near future!
+from IMAP mailboxes. Currently only downloading executable scripts from Gmail is supported.
 
 [MIT License](http://opensource.org/licenses/MIT) (click if you'd like to read
 it).
@@ -11,7 +11,7 @@ Motivation
 ------------------------------
 For one of my jobs at UMass Amherst every week I had to download over 20 email attachments sent
 in as homework submissions by students in the class I was TAing. 
-This task has always stricken me as unnecessarily tedious and ripe for automation. 
+This task had always stricken me as unnecessarily tedious and ripe for automation. 
 One evening I finally got a chance to sit down with IMAP documentation and produce a small script
 that would extract all the attachments from emails in a specified folder.
 The script grew a bit since then and now has some additional functionality as well as an improved
@@ -19,7 +19,7 @@ mechanism for determining what to download.
 
 Usage
 ------------------------------
-It's simple. All you really need is an up-to-date installation of Python 2.7.x
+It's simple. All one needs is an up-to-date installation of Python 2.7.x
 (the code should work with 3.x, but hasn't been tested on it) and some
 knowledge of how to use the terminal/bash. 
 
@@ -27,8 +27,8 @@ The main script is in the file "mailbot.py" and the below instructions reference
 The "attachmentbot.py" file provides just
 downloading functionality which is equivalently covered by the ``mailbot" script,
 so I'm considering getting rid of it completely.
-As things are, running "mailbot.py" without any command-line options does the same as running
-"attachmentbot.py".
+As things are, running "python mailbot.py" without any command-line options does the same as running
+"python attachmentbot.py".
 In addition, "mailbot" supports some optional arguments whereas "attachmentbot" does not.
 
 * Place the mailbot.py file into the folder where you want to download
