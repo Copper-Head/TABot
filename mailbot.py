@@ -67,25 +67,50 @@ PORT = 993 # change only if server uses custom SSL port
 address = re.compile('[^<]*@[^>]*')
 name = re.compile('([^<]*)<')
 
-#=========================== Boolean Functions ================================
+#=========================== Server Setup Functions ================================
+
+def ask_for_uname():
+    return raw_input('Please enter your username, then hit Enter:\n')
+
+def ask_for_password():
+    return getpass.getpass('Now please enter your password and hit Enter:\n')
+
+def setup_server(direction):
+    loggedIn = False
+    print(WELCOME_MESSAGE)
+    #print('Starting up a connection...')
+    (protocol, ServerAndPort) = SETTINGS[direction]
+    server = protocol(*ServerAndPort)
+    while not loggedIn:
+        # ask for credentials
+        user = ask_for_uname()
+        pw = ask_for_password()
+        print('Attempting to authenticate...')
+        try:
+            print('logging into server')
+            server.login(user, pw)
+            loggedIn = True 
+            print("Authentication successful. We're in!!")
+        except Exception as e:
+            print(e)
+            print('Authentication failed :( \nPlease try again.')
+            leave = raw_input(EXIT_CLAUSE)
+            if leave == 'exit': # if user wishes to exit, do so
+                sys.exit()
+            continue
+    if direction is 'outgoing':
+        #when sending emails return also sender address in addition to server
+        return (server, user + '@gmail.com')
+    return server
 
 def has_selected(serverinst):
     '''expects IMAP4_SSL instance, checks if its state is "selected"'''
     return serverinst.state == 'SELECTED'
 
-def is_python_script(filename):
-    '''Given a filename (potentially NoneType), check if it's valid (not
-    NoneType) and that it ends in ``.py".  For this to work, it is paramount
-    for students to make sure their submissions contain an explicit extension.
-    Please make sure to stress this in class, since the file extension is
-    also important when running the script files.
-    '''
-    return filename and filename.endswith('.py')
+#============================ Sending Functions ================================
 
 def is_found(name_match):
     return len(name_match) > 0
-
-#============================ Helper Functions ================================
 
 def generate_folder_name(string):
     '''very primitive conversion of user input into acceptable mail imap
@@ -121,40 +146,44 @@ def create_email(submission, subject, sign, sender):
     messg['From'] = sender
     return messg
 
-def ask_for_uname():
-    return raw_input('Please enter your username, then hit Enter:\n')
+def send_emails_from(comments_fname):
+    #set up the server and get sender name
+    (auth_server, sender) = setup_server('outgoing') 
 
-def ask_for_password():
-    getpass.getpass('Now please enter your password and hit Enter:\n')
+    #open file with comments 
+    try:
+        comments = open(comments_fname)
+    except IOError:
+        print('No file with the name {} was found, please try again'.format(comments_fname))
+        sys.exit()
+    
+    #establish subject and signature
+    subj = raw_input('What would you like the subject of your emails to be?\n')
+    sign = raw_input('How would you like to sign your emails? \n')
+    
+    submissions = json.load(comments) # load comments file 
+    for submission in submissions:
+        # loop over all submissions
+        message = create_email(submission, subj, sign, sender)
+        # creating messages
+        auth_server.sendmail(sender, message['To'], message.as_string())
+        # and sending them
 
-def setup_server(direction):
-    loggedIn = False
-    print(WELCOME_MESSAGE)
-    print('Starting up a connection...')
-    (protocol, ServerAndPort) = SETTINGS[direction]
-    server = protocol(*ServerAndPort)
-    while not loggedIn:
-        # ask for credentials
-        user = ask_for_uname()
-        pw = ask_for_password()
-        print('Attempting to authenticate...')
-        try:
-            server.login(user, pw)
-            loggedIn = True 
-            print("Authentication successful. We're in!!")
-        except Exception as e:
-            print(e)
-            print('Authentication failed :( \nPlease try again.')
-            leave = raw_input(EXIT_CLAUSE)
-            if leave == 'exit': # if user wishes to exit, do so
-                sys.exit()
-            continue
-    if direction is 'outgoing':
-        #when sending emails return also sender address in addition to server
-        return (server, user + '@gmail.com')
-    return server
 
-#============================ Core Functions ==================================
+#============================ Downloading Functions ==================================
+
+def is_python_script(filename):
+    '''Given a filename (potentially NoneType), check if it's valid (not
+    NoneType) and that it ends in ``.py".  For this to work, it is paramount
+    for students to make sure their submissions contain an explicit extension.
+    Please make sure to stress this in class, since the file extension is
+    also important when running the script files.
+    '''
+    return filename and filename.endswith('.py')
+
+def is_attachment(message):
+    '''Given a message subpart, checks whether it is an attachment'''
+    return message['Content-Disposition'] and ('attachment' in message['Content-Disposition'])
 
 def download_attachments(create_comments):
     file_counter = 0
@@ -181,8 +210,8 @@ def download_attachments(create_comments):
         return_email = mail['From']
         if mail.is_multipart():
             for submessg in mail.get_payload():
-                file_name = submessg.get_filename() #NoneType if no filename
-                if is_python_script(file_name):
+                if is_attachment(submessg):
+                    file_name = submessg.get_filename() 
                     if file_name not in downloaded_files:
                         file_counter += 1
                         downloaded_files.append(file_name)
@@ -198,30 +227,9 @@ def download_attachments(create_comments):
         with open(comments_file, 'w') as cfile:
             json.dumps(comments)
             json.dump(comments, cfile, indent=1) # include nicer-looking indentation 
+    else:
+        print("Just so you know, I did not create a comments file because you didn't request one:")
     print('\nMission accomplished! I downloaded {0} unique files. Ciao :)'.format(file_counter))
-
-def send_emails_from(comments_fname):
-    #set up the server and get sender name
-    (auth_server, sender) = setup_server('outgoing') 
-
-    #open file with comments 
-    try:
-        comments = open(comments_fname)
-    except IOError:
-        print('No file with the name {} was found, please try again'.format(comments_fname))
-        sys.exit()
-    
-    #establish subject and signature
-    subj = raw_input('What would you like the subject of your emails to be?\n')
-    sign = raw_input('How would you like to sign your emails? \n')
-    
-    submissions = json.load(comments) # load comments file 
-    for submission in submissions:
-        # loop over all submissions
-        message = create_email(submission, subj, sign, sender)
-        # creating messages
-        auth_server.sendmail(sender, message['To'], message.as_string())
-        # and sending them
 
 #================================= __MAIN__ ===================================
 
@@ -231,7 +239,7 @@ def main():
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-send_from', default=None, metavar='COMMENTS_FILE_NAME',
     help='send emails using specified comments file name instead of downloading attachments')
-    group.add_argument('-comments', action='store_true', #default=False,
+    group.add_argument('-comments', action='store_true', 
             help='generate comments file')
     args = parser.parse_args()
     if args.send_from: # if we are sending out grades 
