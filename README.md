@@ -31,14 +31,21 @@ As things are, running "python mailbot.py" without any command-line options does
 "python attachmentbot.py".
 In addition, "mailbot" supports some optional arguments whereas "attachmentbot" does not.
 
-* Place the mailbot.py file into the folder where you want to download
-your files to.
+* Place the mailbot.py file into a folder.
 * Run the file by typing in  ```python mailbot.py [-h] [-comments | -send_from COMMENTS_FILE_NAME]```
 * If you run the file without providing any options it will simply start the download process.
 All the other options are explained later.
 * When prompted, enter your email login credentials along with the name of the folder you want 
 	to download  attachments from.
 * Relax while watching loads of attachments get copied to your computer one by one!
+
+N.B.
+------------------------------
+The program automatically creates a folder with the same name as the folder you select in your
+mailbox.
+If such a folder already exits, the downloaded files are saved in it, overwriting any previously
+downloaded files with identical names.
+
 
 Command-Line Options
 ------------------------------
@@ -47,7 +54,8 @@ Command-Line Options
 	displays the help for the program
 * -comments 	
 	if this flag is included, the program will generate a comments file corresponding
-  	to the downloaded files; incompatible with the "-send_from" option
+  	to the downloaded files; if a comments file already exists, creates another file with a
+	version number; incompatible with the "-send_from" option
 * -send_from COMMENTS_FILE_NAME 
 this option is incompatible with the "-comments" option; when used, it tells the
 program to send out emails using the COMMENTS_FILE_NAME as the source of comments instead
@@ -57,8 +65,8 @@ Disclaimer
 ------------------------------
 
 The ability to store email addresses in a file and use them later to send email is controversial
-from some views of privacy and you must check with your supervisor before you enjoy that functionality. 
-All responsibility for the results lies with the user.
+from some views of privacy and you must check with your supervisor before you employ that functionality. 
+All responsibility for the results lies with you, the user.
 
 N.B.
 ------------------------------
