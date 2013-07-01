@@ -31,7 +31,8 @@ from smtplib import SMTP_SSL #SMTP server functionality for sending
 import json
 from collections import OrderedDict
 from random import choice
-import argparse #smart command line argument parsing 
+import argparse #smart command line argument parsing
+import os #for folder creation
 
 #================================= SET UP =====================================
 # Some messages for printing
@@ -120,8 +121,10 @@ def generate_folder_name(string):
         return string.capitalize()
     return string
 
-def comments_fname(folder_name):
-    return folder_name.replace(' ', '_').lower() + '.json'
+def comments_fname(folder_name, counter): #returns file name with optional version number
+    if counter == 0:
+        return folder_name.replace(' ', '_').lower() + '.json'
+    return folder_name.replace(' ', '_').lower() + str(counter) + '.json'
 
 def create_submission(email_address):
     return OrderedDict([
@@ -204,6 +207,8 @@ def download_attachments(create_comments):
     #turn retrieved object into list of message numbers and loop over it
     messgIDs = messgs[0].split()
     comments = []
+    if not os.path.isdir(folder):   #if the directory does not already exist
+        os.makedirs(folder)         #creates the local folder
     for messageId in messgIDs:
         raw = auth_server.fetch(messageId, '(RFC822)')[1][0][1]
         mail = email.message_from_string(raw)
@@ -211,20 +216,27 @@ def download_attachments(create_comments):
         if mail.is_multipart():
             for submessg in mail.get_payload():
                 if is_attachment(submessg):
-                    file_name = submessg.get_filename() 
+                    file_name = submessg.get_filename()
+                    print(file_name)
                     if file_name not in downloaded_files:
                         file_counter += 1
                         downloaded_files.append(file_name)
-                    with open(file_name, 'wb') as f:
+                    with open(folder+'/'+file_name, 'wb') as f: #goes into the local folder
                         f.write(submessg.get_payload(decode=True))
                     print('Created file: {}'.format(file_name))
                     # create a comments entry
                     comments.append(create_submission(return_email))
     if create_comments:
         # once done downloading attachments, dump comments into comments file
-        comments_file = comments_fname(folder)
-        print('Creating comments file.', comments_file)
-        with open(comments_file, 'w') as cfile:
+        counter = 0
+        comments_file = comments_fname(folder, counter)
+        path = folder+'/'+comments_file
+        while os.path.isfile(path): #if the comments file already exists, create a new one with version number
+            counter += 1
+            comments_file = comments_fname(folder, counter)
+            path = folder+'/'+comments_file
+        print('Creating comments file.', path)
+        with open(path, 'w') as cfile: #goes into the local folder
             json.dumps(comments)
             json.dump(comments, cfile, indent=1) # include nicer-looking indentation 
     else:
