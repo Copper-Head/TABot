@@ -1,6 +1,6 @@
 TABot
 ==============================
-A small and occasionally useful script for downloading batches of email attachments
+A small and handy useful script for downloading batches of email attachments
 from IMAP mailboxes. Currently only downloading executable scripts from Gmail is supported.
 
 [MIT License](http://opensource.org/licenses/MIT) (click if you'd like to read
